@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Virtual environments
+venv/
+.env
+.Python
+
+# IDE and editor settings
+.vscode/
+.vs/
+*.swp
+*.swo
+
+# Node dependencies
+node_modules/
+
+# Large or generated folders
+resources/
+data/
+models/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and runtime files
+*.log
+*.tmp
+
+# Build files
+build/
+dist/
+*.egg-info/

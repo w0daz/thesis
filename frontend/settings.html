@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Energy Monitor</title>
+    
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #4CAF50;
+            --warning-color: #ff9800;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-primary: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --border-color: #e0e0e0;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.3);
+            font-weight: bold;
+        }
+
+        .nav-status {
+            display: flex;
+            align-items: center;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.disconnected {
+            background: #f44336;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .page-description {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Settings Items */
+        .setting-item {
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            background: var(--bg-color);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .setting-item.changed {
+            border-left: 4px solid var(--warning-color);
+            background: #fff8e1;
+        }
+
+        .setting-item.info-only {
+            opacity: 0.8;
+            border-left: 4px solid #2196F3;
+        }
+
+        .setting-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .setting-label {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        .setting-description {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        .info-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background: #2196F3;
+            color: white;
+            font-size: 0.75rem;
+            border-radius: 4px;
+            margin-left: 0.5rem;
+        }
+
+        .setting-control {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* Form Controls */
+        input[type="number"],
+        input[type="range"],
+        select {
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: white;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        input[type="range"] {
+            max-width: 100%;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .slider-value {
+            min-width: 60px;
+            text-align: center;
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+
+        .range-input {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            border-radius: 30px;
+            transition: 0.3s;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--success-color);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+
+        /* Buttons */
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid var(--border-color);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--text-secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #6c7a89;
+        }
+
+        #save-settings-btn {
+            display: none;
+            background: var(--warning-color);
+            color: white;
+        }
+
+        /* Status Messages */
+        .settings-status {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .settings-status.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid var(--success-color);
+        }
+
+        .settings-status.error {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #f44336;
+        }
+
+        .settings-status.warning {
+            background: #fff8e1;
+            color: #f57c00;
+            border-left: 4px solid var(--warning-color);
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                gap: 0.5rem;
+            }
+            .nav-link span:not(.icon) {
+                display: none;
+            }
+            .btn-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h1>⚡ Energy Monitor</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/" class="nav-link">
+                    <span class="icon">📊</span> <span>Dashboard</span>
+                </a></li>
+                <li><a href="/analytics" class="nav-link">
+                    <span class="icon">📈</span> <span>Analytics</span>
+                </a></li>
+                <li><a href="/settings" class="nav-link active">
+                    <span class="icon">⚙️</span> <span>Settings</span>
+                </a></li>
+                <li><a href="/system" class="nav-link">
+                    <span class="icon">🖥️</span> <span>System</span>
+                </a></li>
+            </ul>
+            <div class="nav-status">
+                <div id="connection-status" class="status-badge">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Connected</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="page-header">
+            <p class="page-description">Configure system parameters and alert thresholds</p>
+        </div>
+
+        <div id="settings-status" class="settings-status"></div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Data Collection</h2>
+            </div>
+
+            <div class="setting-item info-only">
+                <div class="setting-header">
+                    <label class="setting-label" for="sample-rate">
+                        Sample Rate
+                        <span class="info-badge">INFO ONLY</span>
+                    </label>
+                </div>
+                <p class="setting-description">How often to read sensor data (in seconds). ⚠️ Requires sensor simulator restart to apply.</p>
+                <div class="setting-control">
+                    <input type="number" id="sample-rate" min="10" max="300" value="60">
+                </div>
+            </div>
+
+            <div class="setting-item info-only">
+                <div class="setting-header">
+                    <label class="setting-label" for="buffer-hours">
+                        Buffer Size
+                        <span class="info-badge">INFO ONLY</span>
+                    </label>
+                </div>
+                <p class="setting-description">How many hours of data to keep in memory. ⚠️ Requires sensor simulator restart to apply.</p>
+                <div class="setting-control">
+                    <input type="number" id="buffer-hours" min="1" max="168" value="24">
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Anomaly Detection</h2>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-header">
+                    <label class="setting-label" for="model-sensitivity">Model Sensitivity</label>
+                    <span id="sensitivity-value" class="slider-value">0.03</span>
+                </div>
+                <p class="setting-description">
+                    Controls ML anomaly detection sensitivity. 
+                    <strong>Lower = stricter</strong> (fewer alerts, higher confidence), 
+                    <strong>Higher = more sensitive</strong> (more alerts, catch more anomalies)
+                </p>
+                <div class="range-input">
+                    <input type="range" id="model-sensitivity" min="0.01" max="0.10" value="0.03" step="0.01">
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-header">
+                    <label class="setting-label" for="detection-frequency">Detection Frequency</label>
+                </div>
+                <p class="setting-description">How often to run ML detection (in hours). ⚠️ Requires server restart to apply.</p>
+                <div class="setting-control">
+                    <select id="detection-frequency">
+                        <option value="0.5">Every 30 minutes</option>
+                        <option value="1" selected>Every hour</option>
+                        <option value="2">Every 2 hours</option>
+                        <option value="6">Every 6 hours</option>
+                        <option value="12">Every 12 hours</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Notifications</h2>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-header">
+                    <label class="setting-label" for="notifications-enabled">Enable Notifications</label>
+                </div>
+                <p class="setting-description">Show browser notifications for new alerts</p>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="notifications-enabled" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button id="apply-settings-btn" class="btn btn-primary">Apply Settings</button>
+            <button id="save-settings-btn" class="btn btn-primary">💾 Save Changes</button>
+            <button id="reset-settings-btn" class="btn btn-secondary">Reset to Defaults</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/settings.js"></script>
+</body>
+</html>
