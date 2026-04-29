@@ -323,7 +323,7 @@ If you use this project in academic research, please cite:
   title = {IoT Energy Monitoring System with ML-Based Anomaly Detection},
   year = {2026},
   publisher = {GitHub},
-  url = {https://github.com/w0daz/energy-monitoring-system}
+  url = {https://github.com/w0daz/thesis}
 }
 ```
 
