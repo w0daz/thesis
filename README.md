@@ -330,7 +330,7 @@ If you use this project in academic research, please cite:
 ## Contact
 
 **Project Maintainer**: Gabriel Ogungbade 
-**Email**: egaog001@edu.xamk.fi
+**Email**: gbadegabriel@gmail.com
 **Thesis Supervisor**: Heikki Brotkin
 **Institution**: South-Eastern University of Applied Science
 
