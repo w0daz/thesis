@@ -325,14 +325,6 @@ If you use this project in academic research, please cite:
   publisher = {GitHub},
   url = {https://github.com/w0daz/thesis}
 }
-```
-
-## Contact
-
-**Project Maintainer**: Gabriel Ogungbade 
-**Email**: gbadegabriel@gmail.com
-**Thesis Supervisor**: Heikki Brotkin
-**Institution**: South-Eastern University of Applied Science
 
 ---
 
