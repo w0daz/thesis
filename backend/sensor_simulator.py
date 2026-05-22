@@ -302,8 +302,10 @@ def main():
     print("2. Generate 5 readings (quick test)")
     print("3. Generate 1 hour of data (60 readings)")
     print("4. Start continuous readings (run until stopped)")
+    print("5. Generate 24 hours of data (1440 readings)")
+    print("6. Generate 48 hours of data (2880 readings)")
     
-    choice = input("\nSelect option (1-4): ")
+    choice = input("\nSelect option (1-6): ")
     
     if choice == "1":
         reading = sensor.read_sensor()
@@ -325,6 +327,12 @@ def main():
         
     elif choice == "4":
         sensor.start_continuous_reading()
+        
+    elif choice == "5":
+        sensor.start_continuous_reading(duration_minutes=1440)
+        
+    elif choice == "6":
+        sensor.start_continuous_reading(duration_minutes=2880)
         
     else:
         print("❌ Invalid option")

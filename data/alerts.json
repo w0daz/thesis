@@ -1,0 +1,93 @@
+{
+  "alerts": [
+    {
+      "timestamp": "2026-04-18 00:05:35",
+      "power_kw": 0.363,
+      "baseline_kw": 0.7846833333333334,
+      "deviation_percent": -53.739300354707844,
+      "alert_type": "consumption_spike",
+      "if_score": -0.6592242017095343,
+      "lstm_error": 1.3865166031019662,
+      "severity": null,
+      "status": null,
+      "baseline_type": "weekend",
+      "id": 1,
+      "created_at": "2026-04-18T16:28:24.483496"
+    },
+    {
+      "id": 2,
+      "timestamp": "2026-04-18 00:05:35",
+      "power_kw": 0.363,
+      "baseline_kw": 0.7846833333333334,
+      "deviation_percent": -53.739300354707844,
+      "alert_type": "consumption_spike",
+      "user_feedback": null,
+      "baseline_type": "weekend",
+      "if_score": -0.6592242017095343,
+      "lstm_error": 1.3865166031019662,
+      "severity": "critical",
+      "status": "active",
+      "created_at": "2026-04-18T16:28:24.533526"
+    },
+    {
+      "id": 3,
+      "timestamp": "2026-04-18 00:16:35",
+      "power_kw": 0.375,
+      "baseline_kw": 0.7846833333333334,
+      "deviation_percent": -52.210021027590756,
+      "alert_type": "consumption_spike",
+      "user_feedback": null,
+      "baseline_type": "weekend",
+      "if_score": -0.6552715475411471,
+      "lstm_error": 1.4941993674931686,
+      "severity": "critical",
+      "status": "active",
+      "created_at": "2026-04-18T17:27:44.546293"
+    },
+    {
+      "timestamp": "2026-04-18 00:16:35",
+      "power_kw": 0.375,
+      "baseline_kw": 0.7846833333333334,
+      "deviation_percent": -52.210021027590756,
+      "alert_type": "consumption_spike",
+      "if_score": -0.6552715475411471,
+      "lstm_error": 1.4941993674931686,
+      "severity": null,
+      "status": null,
+      "baseline_type": "weekend",
+      "id": 4,
+      "created_at": "2026-04-18T17:27:44.619803"
+    },
+    {
+      "id": 5,
+      "timestamp": "2026-04-18 00:23:35",
+      "power_kw": 0.348,
+      "baseline_kw": 0.7846833333333334,
+      "deviation_percent": -55.65089951360422,
+      "alert_type": "consumption_spike",
+      "user_feedback": null,
+      "baseline_type": "weekend",
+      "if_score": -0.6659523224731941,
+      "lstm_error": 1.569366753033817,
+      "severity": "critical",
+      "status": "active",
+      "created_at": "2026-04-18T18:27:38.250881"
+    },
+    {
+      "timestamp": "2026-04-18 00:23:35",
+      "power_kw": 0.348,
+      "baseline_kw": 0.7846833333333334,
+      "deviation_percent": -55.65089951360422,
+      "alert_type": "consumption_spike",
+      "if_score": -0.6659523224731941,
+      "lstm_error": 1.569366753033817,
+      "severity": null,
+      "status": null,
+      "baseline_type": "weekend",
+      "id": 6,
+      "created_at": "2026-04-18T18:27:38.265864"
+    }
+  ],
+  "last_updated": "2026-04-18T18:27:38.265864",
+  "total_count": 6
+}

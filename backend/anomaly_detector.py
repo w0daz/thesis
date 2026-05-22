@@ -30,6 +30,11 @@ class AnomalyDetector:
         self.alerts_path = self.data_dir / "alerts.json"
         self.detection_state_path = self.data_dir / "detection_state.json"
         
+        # Verification file paths (for Chapter 5 experiment)
+        self.alerts_if_only_path = self.data_dir / "alerts_if_only.json"
+        self.alerts_lstm_only_path = self.data_dir / "alerts_lstm_only.json"
+        self.alerts_hybrid_path = self.data_dir / "alerts_hybrid.json"
+        
         # Load models
         self.if_model = None
         self.lstm_model = None
@@ -281,15 +286,21 @@ class AnomalyDetector:
         lock = FileLock(str(self.alerts_path) + ".lock")
         
         with lock:
+            alerts_data = {
+                "alerts": [],
+                "last_updated": None,
+                "total_count": 0
+            }
+            
             if self.alerts_path.exists():
-                with open(self.alerts_path, 'r') as f:
-                    alerts_data = json.load(f)
-            else:
-                alerts_data = {
-                    "alerts": [],
-                    "last_updated": None,
-                    "total_count": 0
-                }
+                try:
+                    with open(self.alerts_path, 'r') as f:
+                        content = f.read().strip()
+                        if content:  # Only parse if file is not empty
+                            alerts_data = json.loads(content)
+                except (json.JSONDecodeError, IOError) as e:
+                    print(f"  ⚠ Warning: Could not read alerts file ({e}), starting fresh")
+                    # Continue with empty alerts_data
             
             alert['id'] = alerts_data['total_count'] + 1
             alert['created_at'] = datetime.now().isoformat()
@@ -334,6 +345,87 @@ class AnomalyDetector:
                 archive_df = alert_row
             archive_df.to_csv(alerts_archive, index=False)
     
+    def save_verification_data(self, df, baseline_data):
+        """
+        Save IF-only, LSTM-only, and Hybrid results for Chapter 5 experiment
+        Enables analysis of model disagreement and fusion validity
+        """
+        weekday_baseline = baseline_data.get('weekday', {})
+        weekend_baseline = baseline_data.get('weekend', {})
+        hourly_baseline = baseline_data.get('hourly', {})
+        
+        # Extract IF-only detections
+        if_only_rows = df[df['if_anomaly'] == 1]
+        if_only_alerts = self._create_detection_alerts(
+            if_only_rows, weekday_baseline, weekend_baseline, hourly_baseline, 'if_only'
+        )
+        self._save_verification_file(if_only_alerts, self.alerts_if_only_path)
+        
+        # Extract LSTM-only detections
+        lstm_only_rows = df[df['lstm_anomaly'] == 1]
+        lstm_only_alerts = self._create_detection_alerts(
+            lstm_only_rows, weekday_baseline, weekend_baseline, hourly_baseline, 'lstm_only'
+        )
+        self._save_verification_file(lstm_only_alerts, self.alerts_lstm_only_path)
+        
+        # Extract Hybrid (AND-gate) detections
+        hybrid_rows = df[df['confirmed_spike'] == 1]
+        hybrid_alerts = self._create_detection_alerts(
+            hybrid_rows, weekday_baseline, weekend_baseline, hourly_baseline, 'hybrid'
+        )
+        self._save_verification_file(hybrid_alerts, self.alerts_hybrid_path)
+        
+        print(f"\n📋 Verification Files Created (Chapter 5 Experiment)")
+        print(f"  ✓ IF-only detections:    {len(if_only_alerts)} in {self.alerts_if_only_path.name}")
+        print(f"  ✓ LSTM-only detections:  {len(lstm_only_alerts)} in {self.alerts_lstm_only_path.name}")
+        print(f"  ✓ Hybrid (AND-gate):     {len(hybrid_alerts)} in {self.alerts_hybrid_path.name}")
+        
+        return {
+            'if_only': len(if_only_alerts),
+            'lstm_only': len(lstm_only_alerts),
+            'hybrid': len(hybrid_alerts)
+        }
+    
+    def _create_detection_alerts(self, rows, weekday_baseline, weekend_baseline, hourly_baseline, detection_type):
+        """Create alert objects from dataframe rows"""
+        alerts = []
+        for _, row in rows.iterrows():
+            hour_str = str(int(row.get('hour', 0)))
+            timestamp = pd.to_datetime(row['timestamp'])
+            day_of_week = timestamp.dayofweek
+            is_weekend = day_of_week >= 5
+            
+            if is_weekend and weekend_baseline:
+                baseline_data = weekend_baseline.get(hour_str, {})
+                baseline_type = "weekend"
+            elif weekday_baseline:
+                baseline_data = weekday_baseline.get(hour_str, {})
+                baseline_type = "weekday"
+            else:
+                baseline_data = hourly_baseline.get(hour_str, {})
+                baseline_type = "hourly"
+            
+            baseline_kw = baseline_data.get('mean', row['power_kw'] * 0.5)
+            
+            alert = self.create_alert(row, baseline_kw)
+            alert['baseline_type'] = baseline_type
+            alert['detection_method'] = detection_type
+            alerts.append(alert)
+        
+        return alerts
+    
+    def _save_verification_file(self, alerts, file_path):
+        """Save verification data to JSON file"""
+        lock = FileLock(str(file_path) + ".lock")
+        with lock:
+            data = {
+                "alerts": alerts,
+                "total_count": len(alerts),
+                "last_updated": datetime.now().isoformat()
+            }
+            with open(file_path, 'w') as f:
+                json.dump(data, f, indent=2)
+    
     def run_detection(self):
         """Run complete anomaly detection pipeline"""
         print("\n" + "=" * 70)
@@ -358,6 +450,15 @@ class AnomalyDetector:
         print("\n✅ Stage 3: Hybrid Decision")
         df = self.hybrid_decision(df)
         
+        # 📋 CHAPTER 5: Save verification data for model comparison
+        baseline_file = self.data_dir / "baseline.json"
+        baseline_json = {}
+        if baseline_file.exists():
+            with open(baseline_file, 'r') as f:
+                baseline_json = json.load(f)
+        
+        verification_summary = self.save_verification_data(df, baseline_json)
+        
         # Extract confirmed spikes
         confirmed_spikes = df[df['confirmed_spike'] == 1]
         
@@ -374,13 +475,7 @@ class AnomalyDetector:
         if len(confirmed_spikes) > 0:
             print(f"\n🚨 ALERTS GENERATED: {len(confirmed_spikes)}")
             
-            # Load baseline with weekday/weekend separation
-            baseline_file = self.data_dir / "baseline.json"
-            baseline_json = {}
-            if baseline_file.exists():
-                with open(baseline_file, 'r') as f:
-                    baseline_json = json.load(f)
-            
+            # Baseline already loaded above for verification data
             weekday_baseline = baseline_json.get('weekday_baseline', {})
             weekend_baseline = baseline_json.get('weekend_baseline', {})
             hourly_baseline = baseline_json.get('hourly_baseline', {})
@@ -433,14 +528,84 @@ class AnomalyDetector:
         print("DETECTION COMPLETE")
         print("=" * 70)
         
+        # 📋 Print experimental instructions for Chapter 5
+        self._print_chapter5_instructions(verification_summary if len(confirmed_spikes) > 0 else {
+            'if_only': int(df['if_anomaly'].sum()),
+            'lstm_only': int(df['lstm_anomaly'].sum()),
+            'hybrid': int(df['confirmed_spike'].sum())
+        })
+        
         return {
             "total_readings": len(df),
             "if_candidates": int(df['if_anomaly'].sum()),
             "lstm_detections": int(df['lstm_anomaly'].sum()),
             "confirmed_spikes": len(confirmed_spikes),
             "alerts": len(confirmed_spikes),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
+            "verification_files": verification_summary if len(confirmed_spikes) > 0 else None
         }
+    
+    def _print_chapter5_instructions(self, verification_summary):
+        """Print instructions for Chapter 5 experiment continuation"""
+        print("\n" + "🔬 " * 35)
+        print("\n📖 CHAPTER 5 EXPERIMENT - NEXT STEPS")
+        print("=" * 70)
+        
+        print("\n✅ VERIFICATION FILES CREATED:")
+        print(f"   1. {self.alerts_if_only_path.name}")
+        print(f"      - Isolation Forest detections only")
+        print(f"      - Count: {verification_summary.get('if_only', 0)}")
+        
+        print(f"\n   2. {self.alerts_lstm_only_path.name}")
+        print(f"      - LSTM Autoencoder detections only")
+        print(f"      - Count: {verification_summary.get('lstm_only', 0)}")
+        
+        print(f"\n   3. {self.alerts_hybrid_path.name}")
+        print(f"      - AND-gate hybrid (both models agree)")
+        print(f"      - Count: {verification_summary.get('hybrid', 0)}")
+        
+        print("\n\n📊 ANALYSIS STEPS FOR CHAPTER 5:")
+        print("-" * 70)
+        
+        print("\nStep 1: Calculate Model Metrics")
+        print("   For each model (IF-only, LSTM-only, Hybrid):")
+        print("   - Total detections (from files)")
+        print("   - Precision: correct_detections / total_detections")
+        print("   - Recall: detected_true_anomalies / all_true_anomalies")
+        print("   - F1: 2 * (precision * recall) / (precision + recall)")
+        
+        print("\nStep 2: Analyze Overlap")
+        print("   - Count alerts in IF-only but NOT in LSTM: {}")
+        print("   - Count alerts in LSTM-only but NOT in IF: {}")
+        print("   - Count alerts in BOTH (Hybrid): {}".format(verification_summary.get('hybrid', 0)))
+        print("   - Create Venn diagram or overlap matrix")
+        
+        print("\nStep 3: Investigate Disagreement")
+        print("   For rows where models disagree:")
+        print("   - Extract IF score and LSTM error")
+        print("   - Do they correlate with different baseline contexts?")
+        print("   - Do misclassifications cluster around specific hours/days?")
+        print("   - This tests H2: context asymmetry hypothesis")
+        
+        print("\nStep 4: Generate Results Tables")
+        print("   Table 5.1: Precision/Recall/F1 comparison")
+        print("   Table 5.2: Alert overlap matrix (IF vs LSTM vs Hybrid)")
+        print("   Figure 5.1: Confusion matrix or overlap visualization")
+        
+        print("\n\n🔧 TO ITERATE:")
+        print("-" * 70)
+        print("   If you need more alerts:")
+        print("   - Edit config/settings.json: increase 'model_sensitivity'")
+        print("   - Or edit backend/model_trainer.py: increase 'contamination'")
+        print("   - Run: python backend/model_trainer.py (retrain)")
+        print("   - Then: python run_server.py (resume detection)")
+        
+        print("\n   To reset for fresh data:")
+        print("   - rm data/alerts*.json  (clear all alert files)")
+        print("   - rm data/detection_state.json")
+        print("   - python run_server.py (restart)")
+        
+        print("\n" + "=" * 70)
 
 
 def main():
